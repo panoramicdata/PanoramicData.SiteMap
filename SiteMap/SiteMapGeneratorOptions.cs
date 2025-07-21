@@ -21,4 +21,9 @@ public class SiteMapGeneratorOptions
 	/// Gets the instance of <see cref="OllamaClient"/> used for interacting with the Ollama service.
 	/// </summary>
 	public OllamaClient? OllamaClient { get; init; }
+
+	/// <summary>
+	/// If using OllamaClient, the model to use for generating summaries.
+	/// </summary>
+	public string? OllamaClientModel { get; init; }
 }
