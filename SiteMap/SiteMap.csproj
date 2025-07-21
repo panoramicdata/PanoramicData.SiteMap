@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageId>PanoramicData.SiteMap</PackageId>
+		<Authors>PanoramicData</Authors>
+		<Description>SiteMap generator for .NET projects.</Description>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/PanoramicData/SiteMap</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/PanoramicData/SiteMap</PackageProjectUrl>
+		<Copyright>Copyright (c) PanoramicData. MIT License.</Copyright>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\LICENSE.txt" Pack="true" PackagePath="" />
+		<None Include="..\README.md" Pack="true" PackagePath="" />
+		<None Include="..\.editorconfig" Link=".editorconfig" />
+		<None Include="..\version.json" Link="version.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Nerdbank.GitVersioning" Version="3.7.115">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="Ollama.Api" Version="0.9.24" />
+	</ItemGroup>
+
+</Project>

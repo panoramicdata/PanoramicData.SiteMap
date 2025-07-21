@@ -1,0 +1,19 @@
+
+<Solution>
+  <SolutionGuid>8d6f3263-d8b4-4795-9c07-79bdcb63b5be</SolutionGuid>
+
+  <Projects>
+    <Project Path="SiteMap.Test/SiteMap.Test.csproj" />
+    <Project Path="SiteMap/SiteMap.csproj" />
+
+    </Projects>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="LICENSE.txt" />
+    <File Path="README.md" />
+    <File Path="version.json" />
+  </Folder>
+  <Project Path="SiteMap.Test/SiteMap.Test.csproj" />
+  <Project Path="SiteMap/SiteMap.csproj" />
+
+  </Solution>
