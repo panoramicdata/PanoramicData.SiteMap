@@ -1,6 +1,7 @@
 using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Ollama.Api.Models;
-using System.Security;
 
 namespace SiteMap
 	;
@@ -13,6 +14,7 @@ public partial class SiteMapGenerator : IDisposable
 	private readonly SiteMapGeneratorOptions _options;
 	private readonly HttpClient _httpClient;
 	private readonly bool _disposeHttpClient;
+	private readonly ILogger _logger;
 	private bool _disposed;
 
 	/// <summary>
@@ -32,6 +34,8 @@ public partial class SiteMapGenerator : IDisposable
 			_httpClient = new HttpClient();
 			_disposeHttpClient = true;
 		}
+
+		_logger = options.Logger ?? NullLogger.Instance;
 	}
 
 	/// <summary>
@@ -44,18 +48,21 @@ public partial class SiteMapGenerator : IDisposable
 		var baseUri = _options.Uri;
 		var visited = new HashSet<Uri>();
 		var toVisit = new Queue<Uri>();
-		var urlSummaries = new Dictionary<Uri, string?>();
 		var issues = new HashSet<string>();
+		var siteMap = new SiteMap();
 		toVisit.Enqueue(baseUri);
 
 		while (toVisit.Count > 0)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			var current = toVisit.Dequeue();
+
 			if (!visited.Add(current))
 			{
 				continue;
 			}
+
+			_logger.LogInformation("Processing URL: {Url}", current);
 
 			string html;
 			try
@@ -65,10 +72,9 @@ public partial class SiteMapGenerator : IDisposable
 			catch (Exception ex)
 			{
 				issues.Add($"Failed to fetch {current}: {ex.Message}");
-				continue; // Skip unreachable pages
+				continue;
 			}
 
-			// Parse links
 			var doc = new HtmlDocument();
 			try
 			{
@@ -88,7 +94,7 @@ public partial class SiteMapGenerator : IDisposable
 					var response = await _options.OllamaClient.Generate.GenerateAsync(new GenerateRequest
 					{
 						Model = _options.OllamaClientModel,
-						Prompt = "Provide a summary, suitable for a Site Map of this web page text content: \n---\n" + doc.Text,
+						Prompt = "Provide a summary, suitable for a Site Map of this web page text content.  Do not provide any introductory text such as 'Here is a summary...'.  Just the content.: \n---\n" + doc.DocumentNode.InnerText,
 					}, cancellationToken);
 					summary = response.Response;
 				}
@@ -98,7 +104,7 @@ public partial class SiteMapGenerator : IDisposable
 				}
 			}
 
-			urlSummaries[current] = summary;
+			siteMap.Urls.Add(new SiteMapUrl { Loc = current, Summary = summary });
 
 			foreach (var link in doc.DocumentNode.SelectNodes("//a[@href]") ?? Enumerable.Empty<HtmlNode>())
 			{
@@ -108,40 +114,40 @@ public partial class SiteMapGenerator : IDisposable
 					continue;
 				}
 
-				if (Uri.TryCreate(current, href, out var foundUri))
+				Uri? foundUri = null;
+				if (Uri.TryCreate(href, UriKind.Absolute, out var absoluteUri))
 				{
-					if (foundUri.Host == baseUri.Host && foundUri.Scheme == baseUri.Scheme)
+					foundUri = absoluteUri;
+				}
+				else if (href.StartsWith('/'))
+				{
+					Uri.TryCreate(baseUri, href, out foundUri);
+				}
+				else
+				{
+					Uri.TryCreate(current, href, out foundUri);
+				}
+
+				if (foundUri != null && foundUri.Host == baseUri.Host && foundUri.Scheme == baseUri.Scheme)
+				{
+					var canonical = new Uri(foundUri.GetLeftPart(UriPartial.Path));
+
+					if (canonical.PathAndQuery.StartsWith("/ReportMagic/ReportMagic"))
 					{
-						var canonical = new Uri(foundUri.GetLeftPart(UriPartial.Path));
-						if (!visited.Contains(canonical))
-						{
-							toVisit.Enqueue(canonical);
-						}
+						continue;
+					}
+
+					if (!visited.Contains(canonical))
+					{
+						toVisit.Enqueue(canonical);
 					}
 				}
 			}
 		}
 
-		// Build sitemap XML
-		var sb = new System.Text.StringBuilder();
-		sb.AppendLine("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
-		foreach (var kvp in urlSummaries.OrderBy(kvp => kvp.Key.AbsoluteUri))
-		{
-			sb.AppendLine("  <url>");
-			sb.AppendLine($"    <loc>{SecurityElement.Escape(kvp.Key.AbsoluteUri)}</loc>");
-			if (!string.IsNullOrWhiteSpace(kvp.Value))
-			{
-				sb.AppendLine($"    <summary>{SecurityElement.Escape(kvp.Value!)}</summary>");
-			}
-
-			sb.AppendLine("  </url>");
-		}
-
-		sb.AppendLine("</urlset>");
-
 		return new GenerationResult
 		{
-			Sitemap = sb.ToString(),
+			SiteMap = siteMap,
 			Issues = issues
 		};
 	}

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Ollama.Api;
 
 namespace SiteMap;
@@ -8,7 +9,7 @@ namespace SiteMap;
 public class SiteMapGeneratorOptions
 {
 	/// <summary>
-	/// The base URI to generate the sitemap for.
+	/// The base URI to generate the site map for.
 	/// </summary>
 	public required Uri Uri { get; init; }
 
@@ -26,4 +27,9 @@ public class SiteMapGeneratorOptions
 	/// If using OllamaClient, the model to use for generating summaries.
 	/// </summary>
 	public string? OllamaClientModel { get; init; }
+
+	/// <summary>
+	/// Optional logger for logging messages during site map generation. If not provided, a null logger will be used.
+	/// </summary>
+	public ILogger? Logger { get; init; }
 }

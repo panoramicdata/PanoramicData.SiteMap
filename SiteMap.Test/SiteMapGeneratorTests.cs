@@ -16,8 +16,8 @@ public class SiteMapGeneratorTests(ITestOutputHelper testOutputHelper) : BaseTes
 			{
 				Uri = new Uri("http://pdl-merlin-01.panoramicdata.com:11434"),
 			}),
-			// OllamaClientModel = null // Prevents comment generation
-			OllamaClientModel = "llama3.1" // Generates comments
+			OllamaClientModel = null // Prevents comment generation
+									 // OllamaClientModel = "llama3.1" // Generates comments
 		});
 
 		var expectedSiteMap = "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"></urlset>";
@@ -29,12 +29,15 @@ public class SiteMapGeneratorTests(ITestOutputHelper testOutputHelper) : BaseTes
 		// Assert
 		Assert.NotNull(generationResult);
 		Assert.NotNull(generationResult.Issues);
-		Assert.NotEmpty(generationResult.Sitemap);
-		Assert.Contains("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">", generationResult.Sitemap);
+		Assert.NotEmpty(generationResult.SitemapXml);
+		Assert.Contains("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">", generationResult.SitemapXml);
 
-		foreach (var issue in generationResult.Issues)
-		{
-			TestOutputHelper.WriteLine(issue);
-		}
+		// Write output to file for debugging purposes
+		var outputFilePath = Path.Combine(Directory.GetCurrentDirectory(), "sitemap.xml");
+		await File.WriteAllTextAsync(outputFilePath, generationResult.SitemapXml, CancellationToken);
+
+		// Write out the errors to a .txt file for debugging purposes
+		var issuesFilePath = Path.Combine(Directory.GetCurrentDirectory(), "sitemap_issues.txt");
+		await File.WriteAllLinesAsync(issuesFilePath, generationResult.Issues, CancellationToken);
 	}
 }

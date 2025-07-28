@@ -5,7 +5,10 @@ public partial class SiteMapGenerator
 {
 	public class GenerationResult
 	{
-		public required string Sitemap { get; init; }
+		public required SiteMap SiteMap { get; init; }
+
 		public required HashSet<string> Issues { get; init; }
+
+		public string SitemapXml => SiteMap.SerializeToXml();
 	}
 }
